@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { CourseSearchableFields } from "./course.constant";
-import { TCourse } from "./course.interface";
-import { Course } from "./course.model"
+import { TCourse, TCoursefaculty } from "./course.interface";
+import { Course, CourseFaculty } from "./course.model"
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 
@@ -128,10 +128,48 @@ const deleteCourseFromDB = async(id:string)=>{
     return result
 }
 
+//------------Assign Faculties-----------
+const assignFacultiesWithCourseIntoDB = async (
+  id: string,
+  payload: Partial<TCoursefaculty>,
+) => {
+  const result = await CourseFaculty.findByIdAndUpdate(
+    id,
+    {
+      course: id,
+      $addToSet: { faculties: { $each: payload } },
+    },
+    {
+      upsert: true,
+      new: true,
+    },
+  );
+  return result;
+};
+
+
+const removeFacultiesFromCourseFromDB = async (
+  id: string,
+  payload: Partial<TCoursefaculty>,
+) => {
+  const result = await CourseFaculty.findByIdAndUpdate(
+    id,
+    {
+      $pull: { faculties: { $in: payload } },
+    },
+    {
+      new: true,
+    },
+  );
+  return result;
+};
+
 export const CourseServices = {
     createCoursesIntoDB,
     getAllCoursesFromDB,
     getSingleCourseFromDB,
     deleteCourseFromDB,
-    updateCourseIntoDB
+    updateCourseIntoDB,
+    assignFacultiesWithCourseIntoDB,
+    removeFacultiesFromCourseFromDB
 }
